@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -26,7 +27,7 @@ func (s *ApiServer) RunServer() {
 
 	router.HandleFunc("/account", makeHttpHandleFunc(s.handleAccount))
 	router.HandleFunc("/account/{id}", makeHttpHandleFunc(s.handleGetAccountById))
-	log.Printf("The server start on: %+v", s.port_address)
+	log.Printf("The server it's running on: %+v", s.port_address)
 	http.ListenAndServe(s.port_address, router)
 
 }
@@ -71,7 +72,16 @@ func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return fmt.Errorf("invalid id given %s", idStr)
+	}
+	account, err := s.store.GetAccountById(id)
+	if err != nil {
+		return err
+	}
+	return toJSON(w, http.StatusOK, account)
 }
 
 func (s *ApiServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {

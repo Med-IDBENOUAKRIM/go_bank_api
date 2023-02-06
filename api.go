@@ -25,7 +25,7 @@ func (s *ApiServer) RunServer() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/account", makeHttpHandleFunc(s.handleAccount))
-	router.HandleFunc("/account/{id}", makeHttpHandleFunc(s.handleGetAccount))
+	router.HandleFunc("/account/{id}", makeHttpHandleFunc(s.handleGetAccountById))
 	log.Printf("The server start on: %+v", s.port_address)
 	http.ListenAndServe(s.port_address, router)
 
@@ -48,11 +48,29 @@ func (s *ApiServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 }
 
 func (s *ApiServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
-	account := NewAccount("med", "kono")
-	return toJSON(w, http.StatusOK, account)
+	accounts, err := s.store.GetAccounts()
+	if err != nil {
+		return nil
+	}
+
+	return toJSON(w, http.StatusOK, accounts)
 }
 
 func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
+	created_account := new(CreateAccountRequest)
+	if err := json.NewDecoder(r.Body).Decode(created_account); err != nil {
+		return err
+	}
+
+	account := NewAccount(created_account.FirstName, created_account.LastName)
+	if err := s.store.CreateAccount(account); err != nil {
+		return err
+	}
+
+	return toJSON(w, http.StatusCreated, account)
+}
+
+func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 

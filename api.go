@@ -26,7 +26,7 @@ func (s *ApiServer) RunServer() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/account", makeHttpHandleFunc(s.handleAccount))
-	router.HandleFunc("/account/{id}", makeHttpHandleFunc(s.handleGetAccountById))
+	router.HandleFunc("/account/{id}", makeHttpHandleFunc(s.handleAccountById))
 	log.Printf("The server it's running on: %+v", s.port_address)
 	http.ListenAndServe(s.port_address, router)
 
@@ -71,16 +71,24 @@ func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	return toJSON(w, http.StatusCreated, account)
 }
 
-func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request) error {
-	id, err := getId(r)
-	if err != nil {
-		return err
+func (s *ApiServer) handleAccountById(w http.ResponseWriter, r *http.Request) error {
+	if r.Method == "GET" {
+		id, err := getId(r)
+		if err != nil {
+			return err
+		}
+		account, err := s.store.GetAccountById(id)
+		if err != nil {
+			return err
+		}
+		return toJSON(w, http.StatusOK, account)
 	}
-	account, err := s.store.GetAccountById(id)
-	if err != nil {
-		return err
+
+	if r.Method == "DELETE" {
+		return s.handleDeleteAccount(w, r)
 	}
-	return toJSON(w, http.StatusOK, account)
+
+	return fmt.Errorf("Method not allowed %s\n", r.Method)
 }
 
 func (s *ApiServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {

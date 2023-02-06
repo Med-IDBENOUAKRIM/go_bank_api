@@ -1,6 +1,19 @@
 package main
 
+import (
+	"log"
+)
+
 func main() {
-	server := NewServer(":3550")
+	store, err := NewPostgresStore()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := store.Init(); err != nil {
+		log.Fatal(err)
+	}
+
+	server := NewServer(":3550", store)
 	server.RunServer()
 }

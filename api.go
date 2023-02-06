@@ -72,10 +72,9 @@ func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request) error {
-	idStr := mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idStr)
+	id, err := getId(r)
 	if err != nil {
-		return fmt.Errorf("invalid id given %s", idStr)
+		return err
 	}
 	account, err := s.store.GetAccountById(id)
 	if err != nil {
@@ -85,7 +84,14 @@ func (s *ApiServer) handleGetAccountById(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *ApiServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	id, err := getId(r)
+	if err != nil {
+		return err
+	}
+	if err := s.store.DeleteAccount(id); err != nil {
+		return err
+	}
+	return toJSON(w, http.StatusOK, map[string]int{"deleted": id})
 }
 
 func (s *ApiServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
@@ -101,7 +107,7 @@ func toJSON(w http.ResponseWriter, status int, v any) error {
 type ApiFunc func(http.ResponseWriter, *http.Request) error
 
 type ApiError struct {
-	Error string
+	Error string `json:"error"`
 }
 
 func makeHttpHandleFunc(f ApiFunc) http.HandlerFunc {
@@ -110,4 +116,14 @@ func makeHttpHandleFunc(f ApiFunc) http.HandlerFunc {
 			toJSON(w, http.StatusBadRequest, ApiError{Error: err.Error()})
 		}
 	}
+}
+
+func getId(r *http.Request) (int, error) {
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return id, fmt.Errorf("invalid id given %s", idStr)
+	}
+
+	return id, nil
 }

@@ -20,6 +20,7 @@ type TransferRequest struct {
 type CreateAccountRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+	Password  string `json:"password"`
 }
 
 type Account struct {
@@ -32,16 +33,17 @@ type Account struct {
 	CreatedAt         time.Time `json:"created_at"`
 }
 
-func NewAccount(first_name, last_name, password string) *Account {
+func NewAccount(first_name, last_name, password string) (*Account, error) {
 	encpassw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
 	return &Account{
 		FirstName:         first_name,
 		LastName:          last_name,
 		Number:            int64(rand.Intn(1000000)),
-		EncryptedPassword: encpassw,
+		EncryptedPassword: string(encpassw),
 		CreatedAt:         time.Now().UTC(),
-	}
+	}, nil
 }

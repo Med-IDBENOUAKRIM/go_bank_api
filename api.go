@@ -53,6 +53,11 @@ func (s *ApiServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 }
 
 func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
+
+	if r.Method != "POST" {
+		return fmt.Errorf("Method not allowed %s\n", r.Method)
+	}
+
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return err
@@ -70,22 +75,19 @@ func (s *ApiServer) handleGetAccount(w http.ResponseWriter, r *http.Request) err
 }
 
 func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
-	created_account := new(CreateAccountRequest)
-	if err := json.NewDecoder(r.Body).Decode(created_account); err != nil {
+	req := new(CreateAccountRequest)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return err
 	}
 
-	account := NewAccount(created_account.FirstName, created_account.LastName)
-	if err := s.store.CreateAccount(account); err != nil {
-		return err
-	}
-
-	token, err := createJWT(account)
+	account, err := NewAccount(req.FirstName, req.LastName, req.Password)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%+v\n", token)
+	if err := s.store.CreateAccount(account); err != nil {
+		return err
+	}
 
 	return toJSON(w, http.StatusCreated, account)
 }

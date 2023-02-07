@@ -13,7 +13,7 @@ type Storage interface {
 	GetAccounts() ([]*Account, error)
 	UpdateAccount(*Account) error
 	GetAccountById(int) (*Account, error)
-	GetAccountByNumber(int) (*Account, error)
+	GetAccountByNumber(int64) (*Account, error)
 }
 
 type PostgresStore struct {

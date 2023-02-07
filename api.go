@@ -137,13 +137,10 @@ func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 
 		token, err := validateJWT(my_token)
 
-		if err != nil {
+		if err != nil || !token.Valid {
 			toJSON(w, http.StatusForbidden, ApiError{Error: "Invalid token"})
 			return
 		}
-
-		claims := token.Claims.(jwt.MapClaims)
-		fmt.Println(claims)
 
 		handlerFunc(w, r)
 	}

@@ -3,7 +3,14 @@ package main
 import (
 	"math/rand"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
+
+type LoginRequest struct {
+	Number   int64  `json:"number"`
+	Password string `json:"password"`
+}
 
 type TransferRequest struct {
 	ToAccount int `json:"to_account"`
@@ -16,19 +23,25 @@ type CreateAccountRequest struct {
 }
 
 type Account struct {
-	ID        int       `json:"id"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	Number    int64     `json:"number"`
-	Balance   int64     `json:"balance"`
-	CreatedAt time.Time `json:"created_at"`
+	ID                int       `json:"id"`
+	FirstName         string    `json:"first_name"`
+	LastName          string    `json:"last_name"`
+	Number            int64     `json:"number"`
+	EncryptedPassword string    `json:"-"`
+	Balance           int64     `json:"balance"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
-func NewAccount(first_name, last_name string) *Account {
+func NewAccount(first_name, last_name, password string) *Account {
+	encpassw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
 	return &Account{
-		FirstName: first_name,
-		LastName:  last_name,
-		Number:    int64(rand.Intn(1000000)),
-		CreatedAt: time.Now().UTC(),
+		FirstName:         first_name,
+		LastName:          last_name,
+		Number:            int64(rand.Intn(1000000)),
+		EncryptedPassword: encpassw,
+		CreatedAt:         time.Now().UTC(),
 	}
 }

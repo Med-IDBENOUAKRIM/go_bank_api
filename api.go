@@ -27,9 +27,10 @@ func NewServer(port string, store Storage) *ApiServer {
 func (s *ApiServer) RunServer() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/account", makeHttpHandleFunc(s.handleAccount))
-	router.HandleFunc("/account/{id}", withJWTAuth(makeHttpHandleFunc(s.handleAccountById), s.store))
-	router.HandleFunc("/transfer", makeHttpHandleFunc(s.handleTransfer))
+	router.HandleFunc("/api/v1/login", makeHttpHandleFunc(s.handleLogin))
+	router.HandleFunc("/api/v1/account", makeHttpHandleFunc(s.handleAccount))
+	router.HandleFunc("/api/v1/account/{id}", withJWTAuth(makeHttpHandleFunc(s.handleAccountById), s.store))
+	router.HandleFunc("/api/v1/transfer", makeHttpHandleFunc(s.handleTransfer))
 	log.Printf("The server it's running on: %+v", s.port_address)
 	http.ListenAndServe(s.port_address, router)
 
@@ -49,6 +50,14 @@ func (s *ApiServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 	}
 
 	return fmt.Errorf("Error: %s", r.Method)
+}
+
+func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return err
+	}
+	return toJSON(w, http.StatusOK, req)
 }
 
 func (s *ApiServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 )
 
@@ -26,7 +28,7 @@ func (s *ApiServer) RunServer() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/account", makeHttpHandleFunc(s.handleAccount))
-	router.HandleFunc("/account/{id}", makeHttpHandleFunc(s.handleAccountById))
+	router.HandleFunc("/account/{id}", withJWTAuth(makeHttpHandleFunc(s.handleAccountById)))
 	router.HandleFunc("/transfer", makeHttpHandleFunc(s.handleTransfer))
 	log.Printf("The server it's running on: %+v", s.port_address)
 	http.ListenAndServe(s.port_address, router)
@@ -68,6 +70,13 @@ func (s *ApiServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	if err := s.store.CreateAccount(account); err != nil {
 		return err
 	}
+
+	token, err := createJWT(account)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%+v\n", token)
 
 	return toJSON(w, http.StatusCreated, account)
 }
@@ -119,6 +128,35 @@ func toJSON(w http.ResponseWriter, status int, v any) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
+func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Calling JWT auth middleware")
+
+		my_token := r.Header.Get("x-jwt-token")
+
+		_, err := validateJWT(my_token)
+
+		if err != nil {
+			toJSON(w, http.StatusForbidden, ApiError{Error: "Invalid token"})
+			return
+		}
+
+		handlerFunc(w, r)
+	}
+}
+
+func validateJWT(token string) (*jwt.Token, error) {
+	secret := os.Getenv("JWTSECRET")
+	return jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(secret), nil
+	})
+}
+
 type ApiFunc func(http.ResponseWriter, *http.Request) error
 
 type ApiError struct {
@@ -141,4 +179,16 @@ func getId(r *http.Request) (int, error) {
 	}
 
 	return id, nil
+}
+
+func createJWT(account *Account) (string, error) {
+	claims := &jwt.MapClaims{
+		"expiresAt":      25000,
+		"account_number": account.Number,
+	}
+
+	secret := os.Getenv("JWTSECRET")
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
 }

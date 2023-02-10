@@ -126,7 +126,7 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 
 func scan(rows *sql.Rows) (*Account, error) {
 	account := new(Account)
-	err := rows.Scan(&account.ID, &account.FirstName, &account.LastName, &account.Number, &account.Balance, &account.CreatedAt)
+	err := rows.Scan(&account.ID, &account.FirstName, &account.LastName, &account.Number, &account.EncryptedPassword, &account.Balance, &account.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

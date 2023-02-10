@@ -56,13 +56,11 @@ func (s *PostgresStore) createAccountTable() error {
 
 func (s *PostgresStore) CreateAccount(account *Account) error {
 	query := `INSERT INTO account (first_name,last_name,number,balance,created_at) VALUES ($1,$2,$3,$4,$5)`
-	res, err := s.db.Query(query, account.FirstName, account.LastName, account.Number, account.Balance, account.CreatedAt)
+	_, err := s.db.Query(query, account.FirstName, account.LastName, account.Number, account.Balance, account.CreatedAt)
 
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("%+v\n", res)
 
 	return nil
 }

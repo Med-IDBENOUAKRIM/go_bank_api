@@ -46,7 +46,7 @@ func (s *PostgresStore) createAccountTable() error {
 		first_name varchar(75),
 		last_name varchar(75),		
 		number serial,
-		encrypted_password nvarchar(75),
+		encrypted_password varchar(75),
 		balance serial,
 		created_at timestamp
 	)`

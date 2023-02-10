@@ -62,6 +62,14 @@ func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return err
 	}
+
+	account, err := s.store.GetAccountByNumber(int64(req.Number))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(account)
+
 	return toJSON(w, http.StatusOK, req)
 }
 

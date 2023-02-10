@@ -68,7 +68,7 @@ func (s *ApiServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	fmt.Println("%+v", account)
+	log.Printf("%+v", account)
 
 	return toJSON(w, http.StatusOK, req)
 }

@@ -46,6 +46,7 @@ func (s *PostgresStore) createAccountTable() error {
 		first_name varchar(75),
 		last_name varchar(75),		
 		number serial,
+		encrypted_password nvarchar(75),
 		balance serial,
 		created_at timestamp
 	)`
@@ -55,8 +56,8 @@ func (s *PostgresStore) createAccountTable() error {
 }
 
 func (s *PostgresStore) CreateAccount(account *Account) error {
-	query := `INSERT INTO account (first_name,last_name,number,balance,created_at) VALUES ($1,$2,$3,$4,$5)`
-	_, err := s.db.Query(query, account.FirstName, account.LastName, account.Number, account.Balance, account.CreatedAt)
+	query := `INSERT INTO account (first_name,last_name,number,encrypted_password,balance,created_at) VALUES ($1,$2,$3,$4,$5,$6)`
+	_, err := s.db.Query(query, account.FirstName, account.LastName, account.Number, account.EncryptedPassword, account.Balance, account.CreatedAt)
 
 	if err != nil {
 		return err
